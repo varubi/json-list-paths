@@ -1,5 +1,5 @@
 {
-  "name": "json-path-list",
+  "name": "json-list-paths",
   "version": "1.0.0",
   "description": "Traverse through a JSON object and get a list of all keys and paths.",
   "main": "index.js",
