@@ -52,13 +52,13 @@ function Main(object, options) {
     }
     function lookup(path) {
         if (!dictionary[path])
-            dictionary[path] = new JSONPath();
+            dictionary[path] = new JSONPathList();
         return dictionary[path];
     }
     return root;
 }
 
-function JSONPath() {
+function JSONPathList() {
     this._types = Object.create(null);
     this._keys = Object.create(null)
     this._values = Object.create(null);
@@ -66,7 +66,7 @@ function JSONPath() {
     this._parent = null;
 }
 
-JSONPath.prototype.addValue = function (value) {
+JSONPathList.prototype.addValue = function (value) {
     if (Array.isArray(value)) {
         this._types.array = true;
         return;
@@ -93,8 +93,8 @@ JSONPath.prototype.addValue = function (value) {
     }
     this._types[(typeof value)] = true;
 }
-JSONPath.prototype.addChild = function (key, object) {
-    if (JSONPath.prototype.isPrototypeOf(object))
+JSONPathList.prototype.addChild = function (key, object) {
+    if (JSONPathList.prototype.isPrototypeOf(object))
         if (!this._children[key])
             this._children[key] = object;
         else {
@@ -102,21 +102,21 @@ JSONPath.prototype.addChild = function (key, object) {
         }
 }
 
-JSONPath.prototype.children = function (limit) {
+JSONPathList.prototype.children = function (limit) {
     return Subset(this, '_children', limit);
 }
-JSONPath.prototype.types = function (limit) {
+JSONPathList.prototype.types = function (limit) {
     return Subset(this, '_types', limit);
 }
-JSONPath.prototype.keys = function (limit) {
+JSONPathList.prototype.keys = function (limit) {
     return Subset(this, '_keys', limit);
 }
-JSONPath.prototype.values = function (limit) {
+JSONPathList.prototype.values = function (limit) {
     return Subset(this, '_values', limit);
 }
 
-JSONPath.prototype.merge = function (obj) {
-    if (!JSONPath.prototype.isPrototypeOf(obj))
+JSONPathList.prototype.merge = function (obj) {
+    if (!JSONPathList.prototype.isPrototypeOf(obj))
         return;
     for (const key in obj._types) {
         this._types[key] = true;
@@ -131,7 +131,7 @@ JSONPath.prototype.merge = function (obj) {
         this.addChild(key, obj._children[key])
     }
 }
-JSONPath.prototype.reduce = function (options) {
+JSONPathList.prototype.reduce = function (options) {
     var reduced = Reduce(this, '', options);
     while (reduced) {
         reduced = Reduce(this, '', options);
@@ -139,11 +139,11 @@ JSONPath.prototype.reduce = function (options) {
     return this;
 }
 
-JSONPath.prototype.get = function (target) {
+JSONPathList.prototype.get = function (target) {
     return Get(this, '', target);
 }
 
-JSONPath.prototype.list = function (options) {
+JSONPathList.prototype.list = function (options) {
     options = options || Object.create(null)
     var obj = List(this, '', options);
     if (Object.keys(options).filter((n) => ['values', 'types', 'keys', 'children'].includes(n)).length)
@@ -163,10 +163,9 @@ function Subset(jsonpath, key, limit) {
     return keys.filter((v, i) => i % mod == 0).slice(0, limit - 1)
 }
 function Reduce(jsonpath, path, options) {
-    console.log(path, Path.match(options.match, path))
     var reduced = false;
     if (jsonpath.children().length >= options.keylimit || Path.match(options.match, path)) {
-        var combine = new JSONPath();
+        var combine = new JSONPathList();
         combine._types.dictionary = true;
         var ary = jsonpath._children['[]'];
         for (const key in jsonpath._children) {
@@ -185,7 +184,7 @@ function Reduce(jsonpath, path, options) {
     for (var key in jsonpath._children) {
         var usekey = Path.replace(path, key, options.replace);
         if (usekey != key) {
-            jsonpath._children[usekey] = jsonpath._children[usekey] || (new JSONPath());
+            jsonpath._children[usekey] = jsonpath._children[usekey] || (new JSONPathList());
             jsonpath._children[usekey].merge(jsonpath._children[key]);
             delete jsonpath._children[key];
         }

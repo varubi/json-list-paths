@@ -1,5 +1,5 @@
 {
-  "name": "json-paths",
+  "name": "json-path-list",
   "version": "1.0.0",
   "description": "Traverse through a JSON object and get a list of all keys and paths.",
   "main": "index.js",
@@ -7,5 +7,6 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "varubi",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {}
 }

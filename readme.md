@@ -1,46 +1,27 @@
-# JSON Paths
+# JSON List Paths
 A node.js utility to iterate through a JSON object and retrieve a list of all available paths. As well as property type and values. 
 
 ## Install 
-`npm install json-paths`
+`npm install json-list-paths`
 
 ## Usage
-Pass a parsed JSON object to the function and will return a `JSONPath` object view methods below for usefullness.
+Pass a parsed JSON object to the function and will return a `JSONPathList` object. See methods below for usefullness.
 
 ```JavaScript
-var json_paths = require('json-paths');
+var jlp = require('json-list-paths')
+
 var json = {
     a: 'abc',
     b: 123,
     c: {},
     d: []
 }
-json_paths(json);
+jlp(json);
 ```
 
 ## Methods
 ### get _(path)_
-Retrieves a child matching the supplied `path`.
-
-#### Examples
-```JavaScript
-var json_paths = require('json-paths');
-
-var json = {
-    ary: [
-        123,
-        'abc',
-        { ary1: 'b' }
-    ],
-    some_null: null
-}
-json_paths(json).get('.ary').list();
-// Result: 
-// [ 
-//     '.[]',
-//     '.[].ary1',
-// ]
-```
+Returns the `JSONPathList` object matching that key.
 
 ### list _([options])_
 With no options the list method will return a string array of all the available paths in the object with a few notable identifiers. A `[]`  in the path indicates that the previous key was an array and any elements afterwards were found in a child of that array. When using the `reduce` method you will come across `{}` in the keys indicated that previous object was collapsed.
@@ -51,118 +32,6 @@ With no options the list method will return a string array of all the available 
 * **children** _[boolean, number] *optional_ - Returns object properties if any for each path. If `true` or `0` will return all values, a number will return `n` amount per path.
 * **keys** _[boolean, number] *optional_ - Is like `children` but returns properties for collapsed paths. _See `Reduce`_. If `true` or `0` will return all values, a number will return `n` amount per path.
 
-#### Examples
-```JavaScript
-var json_paths = require('json-paths');
-
-var json = {
-    ary: [
-        123,
-        'abc',
-        { ary1: 'b' }
-    ],
-    some_null: null
-}
-json_paths(json).list();
-// Result: 
-// [ 
-//     '.', 
-//     '.ary', 
-//     '.ary.[]',
-//     '.ary.[].ary1',
-//     '.anull' 
-// ]
-```
-
-```JavaScript
-json_paths(json).list({types: true});
-// Result: 
-// {
-//     '.': {
-//         types: ['object']
-//     },
-//     '.ary': {
-//         types: ['array']
-//     },
-//     '.ary.[]': {
-//         types: ['number-int', 'string', 'object']
-//     },
-//     '.ary.[].ary1': {
-//         types: ['string']
-//     },
-//     '.anull': {
-//         types: ['null']
-//     }
-// }
-```
-
-```JavaScript
-json_paths(json).list({values: true});
-// Result: 
-// {
-//     '.': {},
-//     '.ary': {},
-//     '.ary.[]': {
-//         values: ['123', 'abc']
-//     },
-//     '.ary.[].ary1': {
-//         values: ['b']
-//     },
-//     '.anull': {}
-// }
-```
-
-```JavaScript
-json_paths(json).list({children: true});
-// Result: 
-// {
-//     '.':
-//         {
-//             children: ['ary', 'anull']
-//         },
-//     '.ary':
-//         {
-//             children: ['[]']
-//         },
-//     '.ary.[]':
-//         {
-//             children: ['ary1']
-//         },
-//     '.ary.[].ary1': {},
-//     '.anull': {}
-// }
-```
-
-```JavaScript
-var json = {
-    'P123N': {
-        name: 'Item 1',
-        value: 12,
-        quantity: 12
-    },
-    'A234DD': {
-        name: 'Item 2',
-        value: 10,
-        quantity: 1
-    },
-    'G123': {
-        name: 'Item 3',
-        value: 20,
-        quantity: 4
-    }
-}
-json_paths(json)
-    .reduce({ match: ['.'] })
-    .list({ keys: true });
-// Result: 
-// {
-//     '.': {},
-//     '.{}': { keys: ['P123N', 'A234DD', 'G123'] },
-//     '.{}.name': {},
-//     '.{}.value': {},
-//     '.{}.quantity': {}
-// }
-```
 
 ### reduce _(options)_
 The reduce method is used to collapse object properties down to one. This is useful if you have a JSON object that uses an id for the key _(an example might be an object with SKUs as the the keys)_. Objects that are collapsed will have `{}`in place of where the keys would have been in the path.
@@ -176,7 +45,11 @@ The reduce method is used to collapse object properties down to one. This is use
     * **stop** _[boolean]_ - Stop all further replacements.
 
 #### Examples
+
+_Using all available options for `list`_
 ```JavaScript
+var jlp = require('json-list-paths');
+
 var json = {
     items: {
         'PN1234': {
@@ -202,23 +75,67 @@ var json = {
     }
 
 }
-json_paths(json)
-    .reduce({ match: ['.items'] })
-    .list();
-// Result: 
-// ['.',
-//     '.items',
-//     '.items.{}',
-//     '.items.{}.name',
-//     '.items.{}.value',
-//     '.items.{}.quantity',
-//     '.total',
-//     '.total.items',
-//     '.total.quantity',
-//     '.total.value'
-// ]
+jlp(json)
+    .reduce({
+        match: ['.items']
+    })
+    .list({
+        keys: true,
+        values: true,
+        types: true,
+        children: true
+
+    });
+
+// {
+//     '.': {
+//         types: ['object'],
+//         children: ['items', 'total']
+//     },
+//     '.items': {
+//         types: ['object'],
+//         children: ['{}']
+//     },
+//     '.items.{}':
+//         {
+//             types: ['dictionary', 'object'],
+//             keys: ['PN1234', 'PN123452', 'G123'],
+//             children: ['name', 'value', 'quantity']
+//         },
+//     '.items.{}.name':
+//         {
+//             values: ['Item 1', 'Item 2', 'Item 3'],
+//             types: ['string']
+//         },
+//     '.items.{}.value': {
+//         values: ['10', '12', '20'],
+//         types: ['number-int']
+//     },
+//     '.items.{}.quantity': {
+//         values: ['1', '4', '12'],
+//         types: ['number-int']
+//     },
+//     '.total':
+//         {
+//             types: ['object'],
+//             children: ['items', 'quantity', 'value']
+//         },
+//     '.total.items': {
+//         values: ['3'],
+//         types: ['number-int']
+//     },
+//     '.total.quantity': {
+//         values: ['17'],
+//         types: ['number-int']
+//     },
+//     '.total.value': {
+//         values: ['234'],
+//         types: ['number-int']
+//     }
+// }
 ```
 
+_Using regular expressions `reduce` replace option_
 ```JavaScript
 var json = {
     items: {
@@ -248,7 +165,7 @@ var json = {
 
 }
 
-json_paths(json)
+jlp(json)
     .reduce({
         replace: [{
             path: '.items',
